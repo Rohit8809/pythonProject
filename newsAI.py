@@ -11,14 +11,23 @@ groq_client = Groq(
 )
 
 # Fetch News
-def fetch_news(api_key):
-    print(f"API Key: {NEWS_API_KEY}")
+def fetch_news(api_key, max_news=10):
+    """
+    Fetches the latest news articles using the Currents API.
+
+    Parameters:
+        api_key (str): The API key for accessing Currents API.
+        max_news (int): Maximum number of news articles to fetch.
+
+    Returns:
+        list: A list of dictionaries containing news articles.
+    """
     url = f'https://api.currentsapi.services/v1/latest-news?country=in&apiKey={api_key}'
     response = requests.get(url)
     if response.status_code == 200:
         news_data = response.json()
-        if 'news' in news_data:  # Adjust this according to actual API response
-            return news_data['news']  # Adjust this according to actual API response
+        if 'news' in news_data:
+            return news_data['news'][:max_news]  # Fetch only top 'max_news' articles
         else:
             print("Error: 'news' key not found in the response.")
             return []
@@ -52,26 +61,48 @@ def summarize_article(content):
         print(f"Error summarizing article: {str(e)}")
         return "Summary not available."
 
-# Prepare Full Articles with Summarization
+# Prepare Full Articles with Summarization and Images
 def prepare_full_articles(articles):
+    """
+    Prepares a list of full articles with titles, descriptions, and links.
+
+    Parameters:
+        articles (list): A list of articles to format.
+
+    Returns:
+        list: A list of formatted articles.
+    """
     full_articles = []
     for article in articles:
         description = article.get('description', 'No description available.')
         summary = summarize_article(description)
+        image_url = article.get('image', '')  # Fetch image URL if available
         full_articles.append({
             'title': article['title'],
-            'description': summary,  # Use the summarized content here
-            'link': article['url']
+            'description': summary,
+            'link': article['url'],
+            'image': image_url  # Include image URL
         })
     return full_articles
+complete_articles=prepare_full_articles(articles)
 
-# Send Email
+# Send Email with News and Photos
 def send_email(articles, sender_email, sender_password, recipient_email):
+    """
+    Sends an email containing the list of articles in an HTML formatted body.
+
+    Parameters:
+        articles (list): A list of articles to include in the email.
+        sender_email (str): Sender's email address.
+        sender_password (str): Sender's email password.
+        recipient_email (str): Recipient's email address.
+    """
     msg = MIMEMultipart('alternative')
     msg['Subject'] = "Today’s Headlines: Fresh Updates Await"
     msg['From'] = sender_email
     msg['To'] = recipient_email
 
+    # Email HTML template
     html_template = """
     <html>
     <head>
@@ -116,6 +147,13 @@ def send_email(articles, sender_email, sender_password, recipient_email):
             a:hover {{
                 text-decoration: underline;
             }}
+            img {{
+                max-width: 100%;
+                height: auto;
+                margin: 10px 0;
+                border-radius: 10px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            }}
             hr {{
                 border: 0;
                 border-top: 1px solid #eee;
@@ -153,7 +191,6 @@ def send_email(articles, sender_email, sender_password, recipient_email):
             <div class="footer">
                 <p class="thank-you" style="font-family: 'Lora', serif; color: #FF5722; font-size: 22px; font-weight: bold;">Thank You!</p>
                 <p class="signature" style="font-family: 'Roboto', sans-serif; color: #4CAF50; font-size: 18px; font-weight: 500;">Your Personal AI Productivity Manager</p>
-
             </div>
         </div>
     </body>
@@ -162,8 +199,10 @@ def send_email(articles, sender_email, sender_password, recipient_email):
 
     articles_html = ""
     for article in articles:
+        image_html = f"<img src='{article['image']}' alt='News Image'>" if article['image'] else ""
         articles_html += f"""
         <h3><a href='{article['link']}' target='_blank'>{article['title']}</a></h3>
+        {image_html}
         <p>{article['description']}</p>
         <hr>
         """
@@ -184,7 +223,18 @@ if __name__ == "__main__":
     SENDER_PASSWORD = os.getenv('SENDER_PASSWORD')
     RECIPIENT_EMAIL = os.getenv('RECIPIENT_EMAIL')
 
-    articles = fetch_news(NEWS_API_KEY)
+    # Debugging info for environment variables
+    print(f"NEWS_API_KEY: {NEWS_API_KEY}")
+    print(f"SENDER_EMAIL: {SENDER_EMAIL}")
+    print(f"SENDER_PASSWORD: {'***' if SENDER_PASSWORD else 'Not Set'}")
+    print(f"RECIPIENT_EMAIL: {RECIPIENT_EMAIL}")
+
+    if not NEWS_API_KEY:
+        print("Error: NEWS_API_KEY is not set.")
+        exit(1)
+
+    # Fetch only top 10 news articles
+    articles = fetch_news(NEWS_API_KEY, max_news=10)
     if not articles:
         print("No articles found or an error occurred.")
     else:

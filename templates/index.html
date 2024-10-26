@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal AI Productivity Manager</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo">
+            <h1>Personal AI Productivity Manager</h1>
+        </header>
+
+        <main>
+            <section class="task-summary">
+                <h2>Task Summary</h2>
+                <ul id="task-list">
+                    <!-- Task items will be added here -->
+                </ul>
+            </section>
+
+            <section class="add-task">
+                <h2>Add Task</h2>
+                <input type="text" id="task-input" placeholder="Enter your task here">
+                <button onclick="addTask()">Add Task</button>
+            </section>
+
+            <section class="recommend-news">
+                <h2>Recommended News</h2>
+                <ul id="news-list">
+                    <!-- Recommended news will be added here -->
+                </ul>
+            </section>
+
+            <section class="email-management">
+                <h2>Email Management</h2>
+                <button onclick="manageEmail()">Manage Emails</button>
+            </section>
+
+            <section class="whatsapp-notifications">
+                <h2>WhatsApp Notifications</h2>
+                <button onclick="sendWhatsApp()">Send WhatsApp Notification</button>
+            </section>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='1.js') }}"></script>
+</body>
+</html>
