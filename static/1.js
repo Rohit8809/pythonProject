@@ -22,13 +22,9 @@ function sendWhatsApp() {
 
 // Dummy news recommendations
 const newsList = document.getElementById('news-list');
-const recommendedNews = [
-    'AI Technology in 2024: What to Expect',
-    'How Productivity Tools are Shaping the Future',
-    'The Rise of Remote Work: Challenges and Solutions'
-];
 
-recommendedNews.forEach(news => {
+recommendedNews.forEach(news =>
+{
     const li = document.createElement('li');
     li.textContent = news;
     newsList.appendChild(li);

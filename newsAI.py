@@ -84,7 +84,7 @@ def prepare_full_articles(articles):
             'image': image_url  # Include image URL
         })
     return full_articles
-complete_articles=prepare_full_articles(articles)
+complete_articles = prepare_full_articles(articles)
 
 # Send Email with News and Photos
 def send_email(articles, sender_email, sender_password, recipient_email):

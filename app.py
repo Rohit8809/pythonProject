@@ -1,28 +1,18 @@
 from flask import Flask, render_template, jsonify
-from newsAI import complete_articles
+import requests
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+import os
+from groq import Groq
+
 app = Flask(__name__)
 
-# Sample news data
-news_list = [
-    {"title": "New AI technology breakthroughs", "description": "AI continues to revolutionize industries."},
-    {"title": "Global markets continue to fluctuate", "description": "The stock market remains unpredictable."},
-    {"title": "Scientists discover a new species", "description": "A rare new species found in the Amazon."},
-    {"title": "Advances in renewable energy", "description": "Renewable energy solutions are on the rise."}
-]
 
-# API route to get news data
-@app.route('/api/news', methods=['GET'])
-def get_news():
-    return jsonify(complete_articles)
-
-# Route to serve the HTML UI
-@app.route('/')
-def index():
-    return render_template('index.html')
-# Initialize Groq client for Llama API
 groq_client = Groq(
-    api_key="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"
+    api_key="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"
 )
+
 
 # Fetch News
 def fetch_news(api_key, max_news=10):
@@ -48,6 +38,7 @@ def fetch_news(api_key, max_news=10):
     else:
         print(f"Error fetching news: {response.status_code} - {response.text}")
         return []
+
 
 # Summarize Articles using Groq API
 def summarize_article(content):
@@ -75,7 +66,7 @@ def summarize_article(content):
         print(f"Error summarizing article: {str(e)}")
         return "Summary not available."
 
-# Prepare Full Articles with Summarization and Images
+
 def prepare_full_articles(articles):
     """
     Prepares a list of full articles with titles, descriptions, and links.
@@ -99,6 +90,50 @@ def prepare_full_articles(articles):
         })
     return full_articles
 
-if __name__ == '__main__':
-    app.run(debug=False)
 
+# API route to get news data
+@app.route('/api/news', methods=['GET'])
+def get_news():
+    articles = fetch_news(NEWS_API_KEY, max_news=10)
+    if not articles:
+        print("No articles found or an error occurred.")
+    else:
+        print(f"Fetched {len(articles)} articles.")  # Debugging info
+        full_articles = prepare_full_articles(articles)
+
+    return jsonify(full_articles)
+
+
+# Route to serve the HTML UI
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+
+# Initialize Groq client for Llama API
+
+if __name__ == "__main__":
+    NEWS_API_KEY = os.getenv('NEWS_API_KEY')
+    SENDER_EMAIL = os.getenv('SENDER_EMAIL')
+    SENDER_PASSWORD = os.getenv('SENDER_PASSWORD')
+    RECIPIENT_EMAIL = os.getenv('RECIPIENT_EMAIL')
+
+    # Debugging info for environment variables
+    print(f"NEWS_API_KEY: {NEWS_API_KEY}")
+    print(f"SENDER_EMAIL: {SENDER_EMAIL}")
+    print(f"SENDER_PASSWORD: {'***' if SENDER_PASSWORD else 'Not Set'}")
+    print(f"RECIPIENT_EMAIL: {RECIPIENT_EMAIL}")
+
+    if not NEWS_API_KEY:
+        print("Error: NEWS_API_KEY is not set.")
+        exit(1)
+
+    # Fetch only top 10 news articles
+    articles = fetch_news(NEWS_API_KEY, max_news=10)
+    if not articles:
+        print("No articles found or an error occurred.")
+    else:
+        print(f"Fetched {len(articles)} articles.")  # Debugging info
+        full_articles = prepare_full_articles(articles)
+
+    app.run(debug=False)
